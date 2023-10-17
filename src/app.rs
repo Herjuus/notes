@@ -1,5 +1,3 @@
-use egui::scroll_area::State;
-
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 struct Project {
     name: String,
@@ -8,44 +6,39 @@ struct Project {
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct TemplateApp {
-    // Example stuff:
-    // label: String,
-    // content: String,
-
     projects: Vec<Project>,
-    current_project: Option<Project>,
-
-    // #[serde(skip)] // This how you opt-out of serialization of a field
+    current_id: usize,
 }
 
 impl Default for TemplateApp {
     fn default() -> Self {
         Self {
-            // Example stuff:
-            // label: "Hello World!".to_owned(),
-            // content: "".to_owned(),
             projects: [].to_vec(),
-            current_project: None,
+            current_id: 0,
         }
     }
 }
 
 impl TemplateApp {
-    fn create_project(&mut self, ctx: &egui::Context) {
-        let mut new_project = Project {
-            name: "New Project".to_owned(),
-            content: "".to_owned(),
-        };
-
-        self.projects.push(new_project);
-    }
-
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         if let Some(storage) = cc.storage {
             return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         }
 
         Default::default()
+    }
+
+    fn create_project(&mut self, ctx: &egui::Context) {
+        let new_project = Project {
+            name: "New Page".to_owned(),
+            content: "".to_owned(),
+        };
+
+        self.projects.push(new_project);
+    }
+
+    fn delete_current_project(&mut self, ctx: &egui::Context) {
+        self.projects.remove(self.current_id);
     }
 }
 
@@ -77,19 +70,27 @@ impl eframe::App for TemplateApp {
             .show(ctx, |ui| {
                 for project in self.projects.iter() {
                     if ui.add_sized([ui.available_width(), 40.], egui::Button::new(&project.name)).clicked() {
-                        self.current_project = Some(project.clone());
-                        // self.content = project.content.clone();
+                        let index = self.projects.iter().position(|x| x.name == project.name).unwrap();
+                        self.current_id = index;
                     }
                 }
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
 
-            if let Some(project) = &mut self.current_project {
-                ui.text_edit_singleline(&mut project.name);
-            }
+            ui.horizontal(|ui| {
+                if let Some(project) = &mut self.projects.get_mut(self.current_id) {
+                    ui.text_edit_singleline(&mut project.name);
+                }
 
-            if let Some(project) = &mut self.current_project {
+                if let Some(project) = &mut self.projects.get_mut(self.current_id) {
+                    if ui.button("Delete").clicked() {
+                        self.delete_current_project(ctx);
+                    }
+                }
+            });
+
+            if let Some(project) = &mut self.projects.get_mut(self.current_id) {
                 ui.add_sized([ui.available_width(), ui.available_height()], egui::text_edit::TextEdit::multiline(&mut project.content));
             }
 

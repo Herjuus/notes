@@ -1,9 +1,21 @@
+use egui::scroll_area::State;
+
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
+
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
+struct Project {
+    name: String,
+    content: String,
+}
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct TemplateApp {
     // Example stuff:
     label: String,
+    content: String,
+
+    projects: Vec<Project>,
+    current_project: Option<Project>,
 
     // #[serde(skip)] // This how you opt-out of serialization of a field
 }
@@ -13,6 +25,9 @@ impl Default for TemplateApp {
         Self {
             // Example stuff:
             label: "Hello World!".to_owned(),
+            content: "".to_owned(),
+            projects: [].to_vec(),
+            current_project: None,
         }
     }
 }
@@ -63,7 +78,6 @@ impl eframe::App for TemplateApp {
             if ui.add_sized([ui.available_width(), 40.], egui::Button::new(&self.label)).clicked() {
 
             }
-
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -71,6 +85,8 @@ impl eframe::App for TemplateApp {
             // ui.heading(&self.label);
 
             ui.text_edit_singleline(&mut self.label);
+
+            ui.add_sized([ui.available_width(), ui.available_height()], egui::text_edit::TextEdit::multiline(&mut self.content));
 
             // ui.add_sized([ui.available_width(), ui.available_height()],ui.text_edit_multiline(&mut self.label));
 

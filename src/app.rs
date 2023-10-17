@@ -1,7 +1,5 @@
 use egui::scroll_area::State;
 
-/// We derive Deserialize/Serialize so we can persist app state on shutdown.
-
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 struct Project {
     name: String,
@@ -11,8 +9,8 @@ struct Project {
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct TemplateApp {
     // Example stuff:
-    label: String,
-    content: String,
+    // label: String,
+    // content: String,
 
     projects: Vec<Project>,
     current_project: Option<Project>,
@@ -24,8 +22,8 @@ impl Default for TemplateApp {
     fn default() -> Self {
         Self {
             // Example stuff:
-            label: "Hello World!".to_owned(),
-            content: "".to_owned(),
+            // label: "Hello World!".to_owned(),
+            // content: "".to_owned(),
             projects: [].to_vec(),
             current_project: None,
         }
@@ -33,13 +31,16 @@ impl Default for TemplateApp {
 }
 
 impl TemplateApp {
-    /// Called once before the first frame.
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // This is also where you can customize the look and feel of egui using
-        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
+    fn create_project(&mut self, ctx: &egui::Context) {
+        let mut new_project = Project {
+            name: "New Project".to_owned(),
+            content: "".to_owned(),
+        };
 
-        // Load previous app state (if any).
-        // Note that you must enable the `persistence` feature for this to work.
+        self.projects.push(new_project);
+    }
+
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         if let Some(storage) = cc.storage {
             return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         }
@@ -49,19 +50,14 @@ impl TemplateApp {
 }
 
 impl eframe::App for TemplateApp {
-    /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
-                // #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
                 {
                     ui.menu_button("File", |ui| {
                         if ui.button("New").clicked() {
-
-                        }
-                        if ui.button("Open").clicked() {
-
+                            self.create_project(ctx);
                         }
                         #[cfg(not(target_arch = "wasm32"))]
                         if ui.button("Quit").clicked() {
@@ -74,21 +70,28 @@ impl eframe::App for TemplateApp {
             });
         });
 
-        egui::SidePanel::left("LeftPanel").resizable(true).min_width(250.0).max_width(500.0).show(ctx, |ui| {
-            if ui.add_sized([ui.available_width(), 40.], egui::Button::new(&self.label)).clicked() {
-
-            }
-        });
+        egui::SidePanel::left("LeftPanel")
+            .resizable(true)
+            .min_width(250.0)
+            .max_width(500.0)
+            .show(ctx, |ui| {
+                for project in self.projects.iter() {
+                    if ui.add_sized([ui.available_width(), 40.], egui::Button::new(&project.name)).clicked() {
+                        self.current_project = Some(project.clone());
+                        // self.content = project.content.clone();
+                    }
+                }
+            });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
-            // ui.heading(&self.label);
 
-            ui.text_edit_singleline(&mut self.label);
+            if let Some(project) = &mut self.current_project {
+                ui.text_edit_singleline(&mut project.name);
+            }
 
-            ui.add_sized([ui.available_width(), ui.available_height()], egui::text_edit::TextEdit::multiline(&mut self.content));
-
-            // ui.add_sized([ui.available_width(), ui.available_height()],ui.text_edit_multiline(&mut self.label));
+            if let Some(project) = &mut self.current_project {
+                ui.add_sized([ui.available_width(), ui.available_height()], egui::text_edit::TextEdit::multiline(&mut project.content));
+            }
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                 egui::warn_if_debug_build(ui);
@@ -96,9 +99,7 @@ impl eframe::App for TemplateApp {
         });
     }
 
-    /// Called by the frame work to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
 }
-

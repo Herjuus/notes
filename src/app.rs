@@ -1,3 +1,5 @@
+use std::thread;
+
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
 struct Project {
     name: String,
@@ -8,6 +10,9 @@ struct Project {
 pub struct TemplateApp {
     projects: Vec<Project>,
     current_id: usize,
+
+    #[serde(skip)]
+    loading: bool,
 }
 
 impl Default for TemplateApp {
@@ -15,6 +20,7 @@ impl Default for TemplateApp {
         Self {
             projects: [].to_vec(),
             current_id: 0,
+            loading: false,
         }
     }
 }
@@ -59,7 +65,10 @@ impl eframe::App for TemplateApp {
                     });
                     ui.add_space(16.0);
                 }
-
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
+                    ui.set_visible(self.loading);
+                    ui.spinner();
+                });
             });
         });
 
@@ -102,5 +111,6 @@ impl eframe::App for TemplateApp {
 
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, eframe::APP_KEY, self);
+        thread::sleep(std::time::Duration::from_secs(1));
     }
 }

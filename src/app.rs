@@ -57,6 +57,7 @@ impl eframe::App for TemplateApp {
                     ui.menu_button("File", |ui| {
                         if ui.button("New").clicked() {
                             self.create_project(ctx);
+                            ui.close_menu()
                         }
                         #[cfg(not(target_arch = "wasm32"))]
                         if ui.button("Quit").clicked() {

@@ -1,5 +1,5 @@
 # Notes
 
-https://herjuus.github.io/egui-test/
+https://herjuus.github.io/notes/
 
 Made with Egui

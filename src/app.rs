@@ -112,6 +112,5 @@ impl eframe::App for TemplateApp {
 
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, eframe::APP_KEY, self);
-        thread::sleep(std::time::Duration::from_secs(1));
     }
 }
